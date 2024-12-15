@@ -1,0 +1,10 @@
+[package]
+name = "build_default_impl_fn"
+version = "0.0.1"
+edition = "2024"
+
+[dependencies]
+dsync = { path = "../.." }
+
+[lib]
+path = "build_default_impl_fn.rs"

@@ -39,6 +39,11 @@ pub fn generate_code(
     diesel_schema_file_contents: &str,
     config: &GenerationConfig,
 ) -> Result<Vec<ParsedTableMacro>> {
+    println!(
+        "diesel_schema_file_contents: {:#?}",
+        diesel_schema_file_contents
+    );
+    println!("config: {:#?}", config);
     parser::parse_and_generate_code(diesel_schema_file_contents, config)
 }
 
