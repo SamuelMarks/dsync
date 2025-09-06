@@ -137,6 +137,10 @@ pub struct MainOptions {
     #[arg(short = 'b', long = "diesel-backend")]
     pub diesel_backend: String,
 
+    /// Add these additional derives to each generated `struct`
+    #[arg(short = 'd', long = "derive")]
+    pub additional_derives: Option<Vec<String>>,
+
     /// Generate the "default" function in an `impl Default`
     #[arg(long)]
     pub default_impl: bool,
@@ -269,6 +273,7 @@ fn actual_main() -> dsync::Result<()> {
                 once_connection_type: args.once_connection_type,
                 readonly_prefixes: args.readonly_prefixes,
                 readonly_suffixes: args.readonly_suffixes,
+                additional_derives: args.additional_derives.unwrap_or(Default::default()),
                 default_impl: args.default_impl,
             },
         },

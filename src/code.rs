@@ -1,5 +1,6 @@
 use heck::ToPascalCase;
 use indoc::formatdoc;
+use std::borrow::Cow;
 
 use crate::parser::{ParsedColumnMacro, ParsedTableMacro, FILE_SIGNATURE};
 use crate::{get_table_module_name, GenerationConfig, TableOptions};
@@ -192,7 +193,20 @@ impl<'a> Struct<'a> {
 
     /// Assemble the `derive` attribute for the struct
     fn attr_derive(&self) -> String {
-        let mut derives_vec = Vec::with_capacity(10);
+        let mut derives_vec = if self.config.options.additional_derives.is_empty() {
+            Vec::with_capacity(10)
+        } else {
+            let mut _derives_vec =
+                Vec::<&str>::with_capacity(10 + self.config.options.additional_derives.len());
+            _derives_vec.extend(
+                self.config
+                    .options
+                    .additional_derives
+                    .iter()
+                    .map(|s| -> &str { s.as_ref() }),
+            );
+            _derives_vec
+        };
         // Default derives that exist on every struct
         derives_vec.extend_from_slice(&[derives::DEBUG, derives::CLONE]);
 
