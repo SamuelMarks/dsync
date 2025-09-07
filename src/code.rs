@@ -239,7 +239,9 @@ impl<'a> Struct<'a> {
                     derives_vec.push(derives::PARTIALEQ);
                 }
 
-                derives_vec.push(derives::DEFAULT);
+                /*if !self.config.options.default_impl*/ {
+                    derives_vec.push(derives::DEFAULT);
+                }
             }
             StructType::Create => derives_vec.extend_from_slice(&[derives::INSERTABLE]),
         }
@@ -807,7 +809,7 @@ fn build_default_impl_fn<'a>(
     let fields_to_defaults = column_name_type_nullable
         .map(|name_typ_nullable| {
             format!(
-                "            {name}: {typ_default}",
+                "        {name}: {typ_default}",
                 name = name_typ_nullable.name,
                 typ_default = if name_typ_nullable.nullable {
                     "None"
@@ -818,11 +820,11 @@ fn build_default_impl_fn<'a>(
         })
         .collect::<Vec<String>>()
         .join(",\n");
-    format!(
+    formatdoc!(
         r#"impl Default for {struct_name} {{
   fn default() -> Self {{
     Self {{
-      {fields_to_defaults}
+{fields_to_defaults}
     }}
   }}
 }}"#
@@ -858,11 +860,16 @@ pub fn generate_for_table(table: &ParsedTableMacro, config: &GenerationConfig) -
             ret_buffer.push_str(
                 build_default_impl_fn(
                     &StructType::format(&StructType::Create, &struct_name),
-                    create_struct.fields().iter().map(|col| NameTypNullable {
-                        name: col.name.to_owned(),
-                        typ: col.base_type.as_str(),
-                        nullable: col.is_optional,
-                    }),
+                    create_struct
+                        .table
+                        .columns
+                        .iter()
+                        .filter(not_generated)
+                        .map(|col| NameTypNullable {
+                            name: col.column_name.to_string(),
+                            typ: col.ty.as_str(),
+                            nullable: col.is_nullable,
+                        }),
                 )
                 .as_str(),
             );
@@ -874,6 +881,25 @@ pub fn generate_for_table(table: &ParsedTableMacro, config: &GenerationConfig) -
     if update_struct.has_code() {
         ret_buffer.push('\n');
         ret_buffer.push_str(update_struct.code());
+        /*if config.options.default_impl {
+            ret_buffer.push('\n');
+            ret_buffer.push_str(
+                build_default_impl_fn(
+                    &StructType::format(&StructType::Update, &struct_name),
+                    update_struct
+                        .table
+                        .columns
+                        .iter()
+                        .filter(not_generated)
+                        .map(|col| NameTypNullable {
+                            name: col.column_name.to_string(),
+                            typ: col.ty.as_str(),
+                            nullable: col.is_nullable,
+                        }),
+                )
+                .as_str(),
+            );
+        }*/
     }
 
     // third, push functions - if enabled
@@ -887,15 +913,11 @@ pub fn generate_for_table(table: &ParsedTableMacro, config: &GenerationConfig) -
         ret_buffer.push_str(
             build_default_impl_fn(
                 &struct_name,
-                table
-                    .columns
-                    .iter()
-                    .filter(not_generated)
-                    .map(|col| NameTypNullable {
-                        name: col.name.to_string().to_owned(),
-                        typ: col.ty.as_str(),
-                        nullable: col.is_nullable,
-                    }),
+                table.columns.iter().map(|col| NameTypNullable {
+                    name: col.name.to_string().to_owned(),
+                    typ: col.ty.as_str(),
+                    nullable: col.is_nullable,
+                }),
             )
             .as_str(),
         );
