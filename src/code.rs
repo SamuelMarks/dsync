@@ -192,17 +192,7 @@ impl<'a> Struct<'a> {
 
     /// Assemble the `derive` attribute for the struct
     fn attr_derive(&self) -> String {
-        let mut derives_vec =
-            Vec::<&str>::with_capacity(10 + self.config.options.additional_derives.len());
-        if !self.config.options.additional_derives.is_empty() {
-            derives_vec.extend(
-                self.config
-                    .options
-                    .additional_derives
-                    .iter()
-                    .map(|s| -> &str { s.as_ref() }),
-            );
-        }
+        let mut derives_vec = Vec::with_capacity(10);
         // Default derives that exist on every struct
         derives_vec.extend_from_slice(&[derives::DEBUG, derives::CLONE]);
 
@@ -841,7 +831,7 @@ fn build_default_impl_fn<'a>(
 /// Generate a full file for a given diesel table
 pub fn generate_for_table(table: &ParsedTableMacro, config: &GenerationConfig) -> String {
     // early to ensure the table options are set for the current table
-    let table_options = config.table(table.name.to_string().as_str());
+    let table_options = config.table(&table.name.to_string());
 
     let mut ret_buffer = format!("{FILE_SIGNATURE}\n\n");
 
